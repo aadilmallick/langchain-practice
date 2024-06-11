@@ -1,10 +1,10 @@
 import os
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from PIL import Image
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.output_parsers.json import SimpleJsonOutputParser
@@ -12,6 +12,41 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.output_parsers import JsonOutputParser
 from typing import List, Tuple, Dict
 import sys
+
+
+class OpenAIModel:
+    string_parser = StrOutputParser()
+    json_parser = SimpleJsonOutputParser()
+    def __init__(self):
+        load_dotenv()
+        api_key = os.environ["OPENAI_API_KEY"]
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY is not set in the environment")
+        self.model = ChatOpenAI(model="gpt-3.5-turbo", api_key=api_key)
+        self.embeddings = OpenAIEmbeddings(api_key=api_key)
+    
+    def generateChatPrompt(self, prompt: str, response_type="text"):
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", prompt),
+            MessagesPlaceholder("messages")
+        ])
+        parser = self.string_parser if response_type == "text" else self.json_parser
+        chain = prompt | self.model | parser
+        def invokeChain(messages: List[HumanMessage | SystemMessage]):
+            return chain.invoke({"messages": messages})
+        return invokeChain
+    
+    def generateStructuredPrompt(self, prompt:str, obj: BaseModel):
+        parser = JsonOutputParser(pydantic_object=obj)
+        prompt = PromptTemplate(
+            template=prompt + "\n{format_instructions}\n\n{query}",
+            input_variables=["query"],
+            partial_variables={"format_instructions": parser.get_format_instructions()}
+        )
+        chain = prompt | self.model | parser
+        def invokeChain(query: str):
+            return chain.invoke({"query": query})
+        return invokeChain
 
 
 
@@ -103,6 +138,10 @@ class GeminiModel:
 
 class Animal(BaseModel):
     names: List[str] = Field(description="The list of pet names generated")
+    
+# export only geminimodel and openai model
+__all__ = [GeminiModel, OpenAIModel]
+
 
 if __name__ == "__main__":
     model = GeminiModel()

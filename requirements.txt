@@ -13,3 +13,5 @@ tiktoken
 pydantic
 fastapi
 uvicorn
+chromadb
+unstructured

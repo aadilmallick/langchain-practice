@@ -1,5 +1,5 @@
 import streamlit
-from GeminiModel import GeminiModel
+from aiutils.GeminiModel import GeminiModel
 from langchain_core.messages import HumanMessage
 
 streamlit.title("Pets name generator")

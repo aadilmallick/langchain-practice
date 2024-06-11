@@ -9,8 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, Prom
 from langchain_openai import OpenAIEmbeddings
 import os
 from dotenv import load_dotenv
-from GeminiModel import GeminiModel
-from utils import OSUtils  
+from aiutils.GeminiModel import GeminiModel
+from aiutils.utils import OSUtils  
 from pydantic import BaseModel, field_validator
 import sys
 from typing import List
