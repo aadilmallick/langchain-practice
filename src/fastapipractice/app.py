@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, field_validator
 import json
+import uvicorn
+import os
 
 
 app = FastAPI()
@@ -46,3 +48,6 @@ def create_item(item: Item):
     obj = json.loads(item.model_dump_json())
     obj['message'] = "Item created successfully"
     return obj
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=os.environ["PORT"] or 8000)
