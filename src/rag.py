@@ -1,12 +1,13 @@
 from aiutils.GeminiModel import OpenAIModel
 from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import DirectoryLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+import os
 
-def load_documents():
+def load_documents() -> list[Document]:
     DATA_PATH = "documents"
     loader = DirectoryLoader(DATA_PATH, glob="*.txt")
     documents = loader.load()
@@ -14,14 +15,20 @@ def load_documents():
 
 def create_chroma_db(docs: list[Document], embeddings: OpenAIEmbeddings):
     CHROMA_PATH = "chroma"
-    db = Chroma.from_documents(
-        chunks, OpenAIEmbeddings(), persist_directory=CHROMA_PATH
-    )
-    print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
+    
+    # if chroma folder is not made, create new chroma db
+    if not os.path.exists(CHROMA_PATH):
+        db = Chroma.from_documents(
+            docs, embeddings, persist_directory=CHROMA_PATH
+        )
+    # else load existing chroma db from chroma folder
+    else:
+        db = Chroma(CHROMA_PATH, embeddings)
+    print(f"Saved {len(docs)} chunks to {CHROMA_PATH}.")
     return db
     
 
-def split_docs(documents: list[Document]):
+def split_docs(documents: list[Document]) -> list[Document]:
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
         chunk_overlap=100,
